@@ -7,12 +7,14 @@ block. It will first divide the clip into block, and then evaluate some properti
  (eg. average luma, complexity) of the block. Processing for blocks will be adjusted
  dynamically according to these properties. An optional deblock process can be applied to the final clip to prevent the blocking artifact caused by this filter. This filter is slow, especially when the block size is small, and is unnecessary to use it most of time.
 
+ ![Example](https://raw.githubusercontent.com/kewenyu/BlockEvaluatedFilter-for-Vapoursynth/master/img/example.png)
+
 ## Supported Format
 Gray clip only
 
 ## Requirements
 * Vapoursynth >= R33
-* Numpy (Optinal. Required if deblock is enabled)
+* Numpy (Optional. Required if deblock is enabled)
 
 ## Functions
 
@@ -152,7 +154,7 @@ The raw blocks data is a 3 dimensional list.
 Apply the func to all of the blocks.
 
 ## Example
-```
+```python
 import vapoursynth as vs
 import block_evaluated_filter as bef
 
