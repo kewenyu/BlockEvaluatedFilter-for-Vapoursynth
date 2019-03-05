@@ -165,8 +165,8 @@ class Filter:
     to certain properties of the block.
     """
 
-    @classmethod
-    def luma_complexity_eval_filter(cls, clip, filtered_clip, block_size=128, sigma=1.0, luma_weight=0.2,
+    @staticmethod
+    def luma_complexity_eval_filter(clip, filtered_clip, block_size=128, sigma=1.0, luma_weight=0.2,
                                     complexity_weight=0.8, offset=0.0, deblock=False, debug=False):
         core = vs.get_core()
 
@@ -206,8 +206,8 @@ class Filter:
 
         return block_to_clip(final_blocks, deblock=deblock)
 
-    @classmethod
-    def luma_complexity_eval_adjust(cls, clip, func, block_size=128, sigma=1.0, luma_weight=0.2, complexity_weight=0.8,
+    @staticmethod
+    def luma_complexity_eval_adjust(clip, func, block_size=128, sigma=1.0, luma_weight=0.2, complexity_weight=0.8,
                                     para_min=0, para_max=128, para_is_invert=False, offset=0.0, deblock=False,
                                     debug=False):
         core = vs.get_core()
