@@ -76,6 +76,11 @@ class Block:
     def get_block_size(self):
         return self._blksize
 
+    def get_shape(self):
+        rows = len(self._blocks)
+        columns = len(self._blocks[0])
+        return rows, columns
+
     def filter(self, func):
         """
         Apply the given function to all blocks. It's similar to python's built-in filter.
