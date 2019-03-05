@@ -166,6 +166,38 @@ class Filter:
     """
 
     @staticmethod
+    def luma_eval_filter(clip, filtered_clip, block_size=128, luma_weight=1.0, offset=0.0, deblock=False, debug=False):
+        core = vs.get_core()
+
+        clip_blocks = clip_to_block(clip, block_size)
+        padding = clip_blocks.get_padding()
+
+        clip_blocks = clip_blocks.get_raw_blocks()
+        filtered_clip_blocks = clip_to_block(filtered_clip, block_size).get_raw_blocks()
+        filtered_clip_blocks = [[core.std.PlaneStats(clip, prop='prop') for clip in row] for row in
+                                filtered_clip_blocks]
+
+        def process_clip(clip, filtered):
+            def process(clip, filtered, n, f):
+                luma = f[0].props.propAverage
+                weight = max(min(luma * luma_weight + offset, 1), 0)
+                final = core.std.Merge(clip, filtered, weight)
+
+                if debug is True:
+                    final = core.text.Text(final, str(weight), 5)
+
+                return final
+
+            return core.std.FrameEval(clip, partial(process, clip=clip, filtered=filtered), prop_src=filtered)
+
+        final_blocks = [[process_clip(clip, filtered) for clip, filtered in zip(clip_row, filtered_row)] for
+                        clip_row, filtered_row in zip(clip_blocks, filtered_clip_blocks)]
+        final_blocks = Block(final_blocks, block_size)
+        final_blocks.set_padding(padding)
+
+        return block_to_clip(final_blocks, deblock=deblock)
+
+    @staticmethod
     def luma_complexity_eval_filter(clip, filtered_clip, block_size=128, sigma=1.0, luma_weight=0.2,
                                     complexity_weight=0.8, offset=0.0, deblock=False, debug=False):
         core = vs.get_core()
@@ -201,6 +233,42 @@ class Filter:
         final_blocks = [
             [process_clip(clip, filtered, mask) for clip, filtered, mask in zip(clip_row, filtered_row, mask_row)] for
             clip_row, filtered_row, mask_row in zip(clip_blocks, filtered_clip_blocks, mask_blocks)]
+        final_blocks = Block(final_blocks, block_size)
+        final_blocks.set_padding(padding)
+
+        return block_to_clip(final_blocks, deblock=deblock)
+
+    @staticmethod
+    def luma_eval_adjust(clip, func, block_size=128, luma_weight=1.0, para_min=0, para_max=128, para_is_invert=False,
+                         offset=0.0, deblock=False, debug=False):
+        core = vs.get_core()
+
+        clip_blocks = clip_to_block(clip, block_size)
+        padding = clip_blocks.get_padding()
+
+        clip_blocks = clip_blocks.get_raw_blocks()
+        clip_blocks = [[core.std.PlaneStats(clip, prop='prop') for clip in row] for row in clip_blocks]
+
+        def process_clip(clip):
+            def process(clip, n, f):
+                luma = f[0].props.propAverage
+                weight = max(min(luma * luma_weight + offset, 1), 0)
+                weight = weight if para_is_invert is False else 1 - weight
+                parameter = para_min + weight * (para_max - para_min)
+
+                try:
+                    final = func(clip, parameter)
+                except vs.Error:
+                    final = func(clip, round(parameter))
+
+                if debug is True:
+                    final = core.text.Text(final, str(parameter), 5)
+
+                return final
+
+            return core.std.FrameEval(clip, partial(process, clip=clip), prop_src=clip)
+
+        final_blocks = [[process_clip(clip) for clip in clip_rows] for clip_rows in clip_blocks]
         final_blocks = Block(final_blocks, block_size)
         final_blocks.set_padding(padding)
 
